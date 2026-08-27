@@ -1,8 +1,65 @@
-trigger: none 
-pool: Default
+trigger:
+- main
 
-steps: 
-- task: PowerShell@2
+pool:
+  name: 'selfhostedagent'
+
+variables:
+  sonarProjectKey: '1ajitDevops_Reacttodo'
+  sonarOrganization: '1ajitdevops'
+
+steps:
+# 1. Node.js setup
+- task: NodeTool@0
   inputs:
-    targetType: 'inline'
-    script: 'Write-Host "Hello World"'
+    versionSpec: '18.x'
+  displayName: 'Install Node.js'
+
+# 2. Dependencies install karna
+- script: |
+    npm install
+  displayName: 'Install Dependencies'
+
+# 3. SonarCloud Prepare Task
+- task: SonarCloudPrepare@1
+  inputs:
+    SonarCloud: 'SonarCloudConnection'
+    organization: '$(sonarOrganization)'
+    scannerMode: 'CLI'
+    configMode: 'manual'
+    cliProjectKey: '$(sonarProjectKey)'
+    cliProjectName: 'Reacttodo'
+    cliSources: '.'
+
+# 4. React App Build
+- script: |
+    npm run build
+  displayName: 'Build React App'
+
+# 5. SonarCloud Analysis
+- task: SonarCloudAnalyze@1
+  displayName: 'Run SonarCloud Analysis'
+
+# 6. Quality Gate Result
+- task: SonarCloudPublish@1
+  inputs:
+    pollingTimeoutSec: '300'
+  displayName: 'Publish SonarCloud Quality Gate'
+
+# 7. Zip Build Artifact
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(System.DefaultWorkingDirectory)/build'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/build.zip'
+    replaceExistingArchive: true
+  displayName: 'Package Build Artifact'
+
+# 8. Artifact Publish
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/build.zip'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+  displayName: 'Publish Pipeline Artifact'
