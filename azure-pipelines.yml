@@ -9,44 +9,35 @@ variables:
   sonarOrganization: '1ajitdevops'
 
 steps:
-# 1. Node.js setup
+# 1. Node.js Setup
 - task: NodeTool@0
   inputs:
     versionSpec: '18.x'
   displayName: 'Install Node.js'
 
-# 2. Dependencies install karna
+# 2. SonarScanner Global Install & Run
 - script: |
+    npm install -g sonar-scanner
     npm install
-  displayName: 'Install Dependencies'
+  displayName: 'Install Dependencies & Sonar Scanner'
 
-# 3. SonarQube/SonarCloud Prepare Task
-- task: SonarQubePrepare@1
-  inputs:
-    SonarQube: 'SonarCloudConnection'
-    organization: '$(sonarOrganization)'
-    scannerMode: 'CLI'
-    configMode: 'manual'
-    cliProjectKey: '$(sonarProjectKey)'
-    cliProjectName: 'Reacttodo'
-    cliSources: '.'
-
-# 4. React App Build
+# 3. React Build
 - script: |
     npm run build
   displayName: 'Build React App'
 
-# 5. SonarQube/SonarCloud Analysis
-- task: SonarQubeAnalyze@1
-  displayName: 'Run SonarCloud Analysis'
+# 4. SonarCloud Scan Run (Direct CLI)
+- script: |
+    sonar-scanner \
+      -Dsonar.projectKey=$(sonarProjectKey) \
+      -Dsonar.organization=$(sonarOrganization) \
+      -Dsonar.sources=. \
+      -Dsonar.host.url=https://sonarcloud.io
+  displayName: 'Run SonarCloud Scan'
+  env:
+    SONAR_TOKEN: '1ajitDevops_Reacttodo' # Aapka Sonar Token yahan add karein agar zarurat ho
 
-# 6. Quality Gate Result
-- task: SonarQubePublish@1
-  inputs:
-    pollingTimeoutSec: '300'
-  displayName: 'Publish SonarCloud Quality Gate'
-
-# 7. Zip Build Artifact
+# 5. Zip Build Artifact
 - task: ArchiveFiles@2
   inputs:
     rootFolderOrFile: '$(System.DefaultWorkingDirectory)/build'
@@ -56,7 +47,7 @@ steps:
     replaceExistingArchive: true
   displayName: 'Package Build Artifact'
 
-# 8. Artifact Publish
+# 6. Artifact Publish
 - task: PublishBuildArtifacts@1
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)/build.zip'
