@@ -15,27 +15,21 @@ steps:
     versionSpec: '18.x'
   displayName: 'Install Node.js'
 
-# 2. SonarScanner Global Install & Run
+# 2. Dependencies Install (including react-scripts global/local support)
 - script: |
-    npm install -g sonar-scanner
     npm install
-  displayName: 'Install Dependencies & Sonar Scanner'
+    npm install -g react-scripts sonar-scanner
+  displayName: 'Install Dependencies & CLI Tools'
 
-# 3. React Build
+# 3. React Build (npx through robust execution)
 - script: |
-    npm run build
+    npx react-scripts build
   displayName: 'Build React App'
 
-# 4. SonarCloud Scan Run (Direct CLI)
+# 4. SonarCloud Scan
 - script: |
-    sonar-scanner \
-      -Dsonar.projectKey=$(sonarProjectKey) \
-      -Dsonar.organization=$(sonarOrganization) \
-      -Dsonar.sources=. \
-      -Dsonar.host.url=https://sonarcloud.io
+    npx sonar-scanner -Dsonar.projectKey=$(sonarProjectKey) -Dsonar.organization=$(sonarOrganization) -Dsonar.sources=. -Dsonar.host.url=https://sonarcloud.io
   displayName: 'Run SonarCloud Scan'
-  env:
-    SONAR_TOKEN: '1ajitDevops_Reacttodo' # Aapka Sonar Token yahan add karein agar zarurat ho
 
 # 5. Zip Build Artifact
 - task: ArchiveFiles@2
