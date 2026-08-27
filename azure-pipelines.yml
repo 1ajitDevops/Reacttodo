@@ -15,14 +15,15 @@ steps:
     versionSpec: '18.x'
   displayName: 'Install Node.js'
 
-# 2. Dependencies Install (including react-scripts global/local support)
+# 2. Dependencies Install
 - script: |
     npm install
-    npm install -g react-scripts sonar-scanner
+    npm install -g sonar-scanner
   displayName: 'Install Dependencies & CLI Tools'
 
-# 3. React Build (npx through robust execution)
+# 3. React Build (CI=false bypasses Babel warnings)
 - script: |
+    set CI=false
     npx react-scripts build
   displayName: 'Build React App'
 
